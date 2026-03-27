@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App Sandbox — required for Mac App Store. Remove if distributing outside MAS. -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+
+    <!-- Network access to fetch Bing images -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <!-- Read/write access to user-selected folders (via NSOpenPanel) -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+
+    <!-- Write access to Pictures folder -->
+    <key>com.apple.security.files.pictures.read-write</key>
+    <true/>
+
+    <!-- SMAppService: register launch at login -->
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+</dict>
+</plist>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>com.yourname.DayDrop</string>
+
+    <key>CFBundleName</key>
+    <string>DayDrop</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>DayDrop</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+
+    <key>CFBundleVersion</key>
+    <string>1</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+
+    <!-- Makes the app a background/menu-bar-only app by default.
+         We toggle .accessory / .regular at runtime based on user preference. -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <key>NSHumanReadableCopyright</key>
+    <string>GPL-3.0. Original BingPaper by pengsrc. DayDrop rewrite for Apple Silicon.</string>
+
+    <!-- Required for NSWorkspace wallpaper API -->
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>DayDrop needs access to set your desktop wallpaper.</string>
+
+    <!-- Required for saving images to Pictures -->
+    <key>NSPicturesFolderUsageDescription</key>
+    <string>DayDrop saves downloaded daily wallpapers to your Pictures folder.</string>
+
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <!-- Bing API is HTTPS, but allow for any future CDN redirects -->
+        <key>NSAllowsArbitraryLoads</key>
+        <false/>
+        <key>NSExceptionDomains</key>
+        <dict>
+            <key>bing.com</key>
+            <dict>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                <false/>
+            </dict>
+        </dict>
+    </dict>
+</dict>
+</plist>

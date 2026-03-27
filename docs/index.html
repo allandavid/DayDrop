@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DayDrop — A fresh photo on your Mac, every day</title>
+<meta name="description" content="DayDrop sets a stunning new Bing daily photo as your Mac wallpaper automatically. Built for Apple Silicon. Free and open source."/>
+<meta property="og:title" content="DayDrop"/>
+<meta property="og:description" content="A fresh photo on your Mac desktop, every day."/>
+<meta property="og:type" content="website"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --night:   #07031A;
+    --indigo:  #1A0A4A;
+    --violet:  #5C22A8;
+    --ember:   #C83E1A;
+    --amber:   #E8820A;
+    --gold:    #FFD84A;
+    --cream:   #FFF8EE;
+    --mist:    rgba(255,248,238,0.07);
+    --border:  rgba(255,248,238,0.12);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--night);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── Sky gradient canvas ── */
+  .sky {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: radial-gradient(ellipse 120% 60% at 50% 100%,
+      #E8820A22 0%, #C83E1A18 25%, #5C22A808 55%, transparent 70%),
+      linear-gradient(180deg, #07031A 0%, #12073A 60%, #1A0D50 100%);
+    pointer-events: none;
+  }
+
+  /* Subtle star field */
+  .stars {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .stars span {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--d, 4s) ease-in-out infinite var(--delay, 0s);
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: var(--lo, 0.3); }
+    50%       { opacity: var(--hi, 0.9); }
+  }
+
+  /* ── Layout ── */
+  .page { position: relative; z-index: 1; }
+
+  /* ── Nav ── */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 48px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    background: rgba(7,3,26,0.55);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--cream);
+  }
+
+  .nav-logo svg { flex-shrink: 0; }
+
+  .nav-logo-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    letter-spacing: -0.02em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: rgba(255,248,238,0.6);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--cream); }
+
+  .nav-cta {
+    background: rgba(255,248,238,0.08);
+    border: 1px solid var(--border);
+    color: var(--cream) !important;
+    padding: 9px 22px;
+    border-radius: 100px;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    transition: background 0.2s, border-color 0.2s !important;
+  }
+  .nav-cta:hover {
+    background: rgba(255,248,238,0.14) !important;
+    border-color: rgba(255,248,238,0.25) !important;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 120px 24px 100px;
+    gap: 0;
+  }
+
+  .hero-icon {
+    width: 128px;
+    height: 128px;
+    margin-bottom: 40px;
+    filter: drop-shadow(0 0 60px rgba(232,130,10,0.35))
+            drop-shadow(0 0 24px rgba(92,34,168,0.4));
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-12px); }
+  }
+
+  .hero-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.7s ease forwards 0.2s;
+  }
+
+  .hero-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(52px, 9vw, 96px);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    color: var(--cream);
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.35s;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--amber) 50%, var(--ember) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: clamp(17px, 2.2vw, 21px);
+    font-weight: 300;
+    color: rgba(255,248,238,0.6);
+    max-width: 520px;
+    line-height: 1.6;
+    margin-bottom: 52px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.5s;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.65s;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, var(--amber), var(--ember));
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 15px 34px;
+    border-radius: 100px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+    box-shadow: 0 8px 32px rgba(200,62,26,0.35);
+  }
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-2px); }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    color: rgba(255,248,238,0.7);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    padding: 15px 30px;
+    border-radius: 100px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, transform 0.2s;
+  }
+  .btn-ghost:hover {
+    border-color: rgba(255,248,238,0.3);
+    color: var(--cream);
+    transform: translateY(-2px);
+  }
+
+  .hero-meta {
+    margin-top: 44px;
+    font-size: 12px;
+    color: rgba(255,248,238,0.3);
+    letter-spacing: 0.04em;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.8s;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Drop mockup ── */
+  .mockup-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 0 24px 120px;
+    opacity: 0;
+    animation: fadeUp 1s ease forwards 0.9s;
+  }
+
+  .mockup {
+    position: relative;
+    width: min(680px, 100%);
+  }
+
+  .menubar {
+    background: rgba(30,20,60,0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 14px 14px 0 0;
+    padding: 0 18px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .menubar-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+  }
+  .menubar-dot:nth-child(1) { background: #FF5F57; }
+  .menubar-dot:nth-child(2) { background: #FFBD2E; }
+  .menubar-dot:nth-child(3) { background: #28C840; }
+
+  .menubar-title {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,248,238,0.35);
+    letter-spacing: 0.03em;
+  }
+
+  .desktop-preview {
+    width: 100%;
+    aspect-ratio: 16/10;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 14px 14px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .desktop-preview svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Menu popup */
+  .menu-popup {
+    position: absolute;
+    top: 10px;
+    right: 60px;
+    background: rgba(22,14,50,0.92);
+    backdrop-filter: blur(28px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px 0;
+    width: 230px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    animation: popIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards 1.4s;
+    opacity: 0;
+    transform-origin: top right;
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.88); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .menu-item {
+    padding: 7px 16px;
+    font-size: 13px;
+    color: rgba(255,248,238,0.75);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .menu-item.title-item {
+    color: var(--cream);
+    font-weight: 500;
+    padding-bottom: 2px;
+  }
+  .menu-item.sub-item {
+    color: rgba(255,248,238,0.4);
+    font-size: 12px;
+    padding-top: 2px;
+  }
+  .menu-item.active {
+    background: rgba(232,130,10,0.18);
+    color: var(--amber);
+    border-radius: 6px;
+    margin: 2px 6px;
+    padding: 7px 10px;
+  }
+  .menu-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 5px 0;
+  }
+  .menu-shortcut {
+    font-size: 11px;
+    color: rgba(255,248,238,0.3);
+  }
+
+  /* ── Section ── */
+  section {
+    padding: 100px 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(32px, 5vw, 52px);
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: var(--cream);
+    margin-bottom: 20px;
+  }
+
+  .section-sub {
+    font-size: 17px;
+    font-weight: 300;
+    color: rgba(255,248,238,0.55);
+    max-width: 480px;
+    line-height: 1.7;
+  }
+
+  /* ── Feature grid ── */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2px;
+    margin-top: 64px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .feature {
+    padding: 40px 36px;
+    background: rgba(255,248,238,0.025);
+    border: 1px solid transparent;
+    transition: background 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  .feature:hover { background: rgba(255,248,238,0.045); }
+
+  .feature-icon {
+    width: 44px;
+    height: 44px;
+    background: rgba(232,130,10,0.12);
+    border: 1px solid rgba(232,130,10,0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .feature-icon svg { width: 20px; height: 20px; }
+
+  .feature h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 19px;
+    font-weight: 400;
+    color: var(--cream);
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+
+  .feature p {
+    font-size: 14px;
+    font-weight: 300;
+    color: rgba(255,248,238,0.5);
+    line-height: 1.7;
+  }
+
+  /* ── Spec strip ── */
+  .specs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 64px;
+  }
+
+  .spec {
+    flex: 1;
+    min-width: 160px;
+    padding: 32px 28px;
+    border-right: 1px solid var(--border);
+    background: rgba(255,248,238,0.02);
+  }
+  .spec:last-child { border-right: none; }
+
+  .spec-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 36px;
+    color: var(--cream);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .spec-value span {
+    background: linear-gradient(135deg, var(--gold), var(--amber));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .spec-label {
+    font-size: 13px;
+    font-weight: 300;
+    color: rgba(255,248,238,0.4);
+  }
+
+  /* ── Regions ── */
+  .regions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 48px;
+  }
+
+  .region-chip {
+    padding: 12px 18px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 300;
+    color: rgba(255,248,238,0.6);
+    background: var(--mist);
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .region-chip:hover {
+    border-color: rgba(232,130,10,0.3);
+    color: var(--cream);
+  }
+
+  /* ── Open source band ── */
+  .oss-band {
+    padding: 80px 24px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    background: rgba(255,248,238,0.015);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .oss-band::before {
+    content: 'GPL-3.0';
+    position: absolute;
+    font-family: 'DM Serif Display', serif;
+    font-size: 200px;
+    color: rgba(255,248,238,0.02);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .oss-band h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 4vw, 44px);
+    color: var(--cream);
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+
+  .oss-band p {
+    font-size: 16px;
+    font-weight: 300;
+    color: rgba(255,248,238,0.5);
+    max-width: 480px;
+    margin: 0 auto 36px;
+    line-height: 1.7;
+  }
+
+  /* ── Footer ── */
+  footer {
+    padding: 60px 48px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 32px;
+    border-top: 1px solid var(--border);
+  }
+
+  .footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .footer-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--cream);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .footer-tagline {
+    font-size: 13px;
+    font-weight: 300;
+    color: rgba(255,248,238,0.35);
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 28px;
+  }
+
+  .footer-links a {
+    font-size: 13px;
+    font-weight: 300;
+    color: rgba(255,248,238,0.4);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: rgba(255,248,238,0.8); }
+
+  .footer-copy {
+    font-size: 12px;
+    font-weight: 300;
+    color: rgba(255,248,238,0.22);
+    width: 100%;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    nav { padding: 20px 24px; }
+    .nav-links { display: none; }
+    footer { padding: 48px 24px 32px; flex-direction: column; }
+    .specs { flex-direction: column; }
+    .spec { border-right: none; border-bottom: 1px solid var(--border); }
+    .spec:last-child { border-bottom: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Atmospheric background -->
+<div class="sky"></div>
+<div class="stars" id="stars"></div>
+
+<div class="page">
+
+  <!-- Nav -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+        <path d="M50 10 C30 30 17 50 17 66 A33 33 0 0 0 83 66 C83 50 70 30 50 10 Z"
+              stroke="url(#ng)" stroke-width="6" fill="none"/>
+        <line x1="23" y1="70" x2="77" y2="70" stroke="rgba(255,248,238,0.5)" stroke-width="5" stroke-linecap="round"/>
+        <path d="M34 70 A16 16 0 0 1 66 70" stroke="rgba(255,248,238,0.5)" stroke-width="5" stroke-linecap="round" fill="none"/>
+        <defs>
+          <linearGradient id="ng" x1="50" y1="10" x2="50" y2="100" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FFD84A"/>
+            <stop offset="100%" stop-color="#E8820A"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <span class="nav-logo-text">DayDrop</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#regions">Regions</a></li>
+      <li><a href="#open-source">Open Source</a></li>
+      <li><a href="https://github.com/yourusername/DayDrop" class="nav-cta">GitHub</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero">
+
+    <!-- Inline App Icon SVG -->
+    <svg class="hero-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="hbg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#080318"/>
+          <stop offset="45%" stop-color="#2A0D5C"/>
+          <stop offset="72%" stop-color="#C04020"/>
+          <stop offset="100%" stop-color="#E88020"/>
+        </linearGradient>
+        <linearGradient id="hsky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#12096A"/>
+          <stop offset="50%" stop-color="#7030C0"/>
+          <stop offset="78%" stop-color="#E06030"/>
+          <stop offset="100%" stop-color="#F0A020"/>
+        </linearGradient>
+        <clipPath id="hdrop">
+          <path d="M512 115 C330 290 240 490 240 680 A272 272 0 0 0 784 680 C784 490 694 290 512 115 Z"/>
+        </clipPath>
+      </defs>
+      <rect width="1024" height="1024" rx="224" fill="url(#hbg)"/>
+      <circle cx="200" cy="160" r="5" fill="white" opacity=".8"/>
+      <circle cx="380" cy="110" r="3" fill="white" opacity=".6"/>
+      <circle cx="650" cy="135" r="4" fill="white" opacity=".7"/>
+      <circle cx="820" cy="175" r="4" fill="white" opacity=".72"/>
+      <circle cx="900" cy="100" r="3" fill="white" opacity=".55"/>
+      <circle cx="150" cy="260" r="3" fill="white" opacity=".42"/>
+      <g clip-path="url(#hdrop)">
+        <rect width="1024" height="1024" fill="url(#hsky)"/>
+        <rect y="680" width="1024" height="344" fill="#120606"/>
+        <rect y="668" width="1024" height="18" fill="#2A0A06"/>
+        <circle cx="512" cy="680" r="230" fill="#EF9020" opacity=".13"/>
+        <circle cx="512" cy="680" r="168" fill="#F8AE2E" opacity=".2"/>
+        <circle cx="512" cy="680" r="118" fill="#FFD050" opacity=".88"/>
+        <circle cx="512" cy="680" r="94" fill="#FFE46A"/>
+      </g>
+      <path d="M512 115 C330 290 240 490 240 680 A272 272 0 0 0 784 680 C784 490 694 290 512 115 Z"
+            fill="none" stroke="white" stroke-width="28" opacity=".1"/>
+      <path d="M512 115 C330 290 240 490 240 680 A272 272 0 0 0 784 680 C784 490 694 290 512 115 Z"
+            fill="none" stroke="white" stroke-width="9" opacity=".8"/>
+    </svg>
+
+    <p class="hero-label">macOS · Apple Silicon · Free</p>
+    <h1 class="hero-title">A <em>fresh photo</em><br/>every morning.</h1>
+    <p class="hero-sub">DayDrop quietly sets a stunning new daily photo as your Mac wallpaper. No setup, no fuss. Just open it and forget it.</p>
+
+    <div class="hero-actions">
+      <a href="https://github.com/yourusername/DayDrop/releases/latest" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download for Mac
+      </a>
+      <a href="https://github.com/yourusername/DayDrop" class="btn-ghost">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        View on GitHub
+      </a>
+    </div>
+    <p class="hero-meta">macOS 13 Ventura or later &nbsp;·&nbsp; Apple Silicon only &nbsp;·&nbsp; GPL-3.0</p>
+  </header>
+
+  <!-- Mockup -->
+  <div class="mockup-wrap">
+    <div class="mockup">
+      <div class="menubar">
+        <div class="menubar-dot"></div>
+        <div class="menubar-dot"></div>
+        <div class="menubar-dot"></div>
+        <span class="menubar-title">Desktop</span>
+      </div>
+      <div class="desktop-preview">
+        <!-- Simulated wallpaper — dawn sky scene -->
+        <svg viewBox="0 0 680 425" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="wsky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0C0730"/>
+              <stop offset="38%" stop-color="#4A1690"/>
+              <stop offset="68%" stop-color="#C84818"/>
+              <stop offset="100%" stop-color="#F09018"/>
+            </linearGradient>
+          </defs>
+          <rect width="680" height="425" fill="url(#wsky)"/>
+          <!-- Stars -->
+          <circle cx="80"  cy="38"  r="1.5" fill="white" opacity=".7"/>
+          <circle cx="155" cy="22"  r="1"   fill="white" opacity=".6"/>
+          <circle cx="240" cy="45"  r="1.5" fill="white" opacity=".75"/>
+          <circle cx="330" cy="18"  r="1"   fill="white" opacity=".5"/>
+          <circle cx="420" cy="35"  r="1.5" fill="white" opacity=".65"/>
+          <circle cx="510" cy="14"  r="1"   fill="white" opacity=".55"/>
+          <circle cx="600" cy="42"  r="1.5" fill="white" opacity=".7"/>
+          <circle cx="650" cy="24"  r="1"   fill="white" opacity=".5"/>
+          <circle cx="48"  cy="70"  r="1"   fill="white" opacity=".4"/>
+          <circle cx="190" cy="65"  r="1"   fill="white" opacity=".45"/>
+          <circle cx="560" cy="60"  r="1"   fill="white" opacity=".4"/>
+          <!-- Mountains -->
+          <polygon points="0,290 120,160 240,290" fill="#1A0830" opacity=".9"/>
+          <polygon points="100,290 260,140 420,290" fill="#140625" opacity=".95"/>
+          <polygon points="280,290 420,170 560,290" fill="#1C0A35" opacity=".85"/>
+          <polygon points="450,290 580,185 680,290" fill="#150528" opacity=".9"/>
+          <polygon points="560,290 650,210 680,290" fill="#200A3A" opacity=".8"/>
+          <!-- Ground -->
+          <rect y="288" width="680" height="137" fill="#080210"/>
+          <!-- Horizon glow -->
+          <ellipse cx="340" cy="290" rx="280" ry="60" fill="#E8820A" opacity=".22"/>
+          <ellipse cx="340" cy="290" rx="180" ry="40" fill="#F0A020" opacity=".18"/>
+          <!-- Sun -->
+          <circle cx="340" cy="290" r="60" fill="#EF9020" opacity=".15"/>
+          <circle cx="340" cy="290" r="42" fill="#F8AE2E" opacity=".25"/>
+          <circle cx="340" cy="290" r="28" fill="#FFD050" opacity=".9"/>
+          <circle cx="340" cy="290" r="20" fill="#FFE86A"/>
+          <!-- Foreground trees (silhouette) -->
+          <rect x="30"  y="260" width="8"  height="30"  fill="#080210"/>
+          <polygon points="34,220 14,265 54,265"  fill="#080210"/>
+          <polygon points="34,240 18,265 50,265"  fill="#080210"/>
+          <rect x="620" y="255" width="8"  height="35"  fill="#080210"/>
+          <polygon points="624,215 604,260 644,260" fill="#080210"/>
+          <polygon points="624,238 608,260 640,260" fill="#080210"/>
+        </svg>
+
+        <!-- Floating menu popup -->
+        <div class="menu-popup">
+          <div class="menu-item title-item">Danakil Depression</div>
+          <div class="menu-item sub-item">Ethiopia · March 27</div>
+          <div class="menu-divider"></div>
+          <div class="menu-item">History
+            <span>›</span>
+          </div>
+          <div class="menu-divider"></div>
+          <div class="menu-item active">
+            Refresh Now
+            <span class="menu-shortcut">⌘R</span>
+          </div>
+          <div class="menu-item">Open Image Folder
+            <span class="menu-shortcut">⌘F</span>
+          </div>
+          <div class="menu-divider"></div>
+          <div class="menu-item">Settings…
+            <span class="menu-shortcut">⌘,</span>
+          </div>
+          <div class="menu-divider"></div>
+          <div class="menu-item">Quit DayDrop
+            <span class="menu-shortcut">⌘Q</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <section id="features">
+    <p class="section-label">What it does</p>
+    <h2 class="section-title">Every feature you need.<br/>Nothing you don't.</h2>
+    <p class="section-sub">DayDrop lives entirely in your menu bar. It's always there when you want it, invisible when you don't.</p>
+
+    <div class="features">
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#E8820A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </div>
+        <h3>Daily auto-refresh</h3>
+        <p>Checks for a new photo every hour. When a fresh one drops, it downloads and applies it automatically.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#E8820A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+        <h3>Browse history</h3>
+        <p>The last 8 daily photos are always one click away. Pick any and it sets instantly.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#E8820A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <h3>All screens covered</h3>
+        <p>Sets the wallpaper on every connected monitor simultaneously, no manual juggling.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#E8820A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </div>
+        <h3>12 global regions</h3>
+        <p>Choose a region and see the daily photo curated for that market — different locations, different images.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#E8820A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+        </div>
+        <h3>Zero dependencies</h3>
+        <p>Pure Swift. No CocoaPods, no third-party frameworks. Just AppKit, SwiftUI, and the system APIs.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#E8820A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <h3>Sandboxed &amp; private</h3>
+        <p>Runs in the macOS App Sandbox. No telemetry, no tracking. Downloads images from Bing and nothing else.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Specs -->
+  <section style="padding-top:0">
+    <div class="specs">
+      <div class="spec">
+        <div class="spec-value"><span>arm64</span></div>
+        <div class="spec-label">Apple Silicon native</div>
+      </div>
+      <div class="spec">
+        <div class="spec-value"><span>0</span></div>
+        <div class="spec-label">Third-party dependencies</div>
+      </div>
+      <div class="spec">
+        <div class="spec-value"><span>12</span></div>
+        <div class="spec-label">Regions supported</div>
+      </div>
+      <div class="spec">
+        <div class="spec-value"><span>8</span></div>
+        <div class="spec-label">Days of history</div>
+      </div>
+      <div class="spec">
+        <div class="spec-value"><span>13+</span></div>
+        <div class="spec-label">macOS Ventura or later</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Regions -->
+  <section id="regions">
+    <p class="section-label">Global coverage</p>
+    <h2 class="section-title">Pick your view<br/>of the world.</h2>
+    <p class="section-sub">Bing curates a different daily photo for each market. Switch region in settings any time — DayDrop re-fetches immediately.</p>
+    <div class="regions-grid">
+      <div class="region-chip">🇺🇸 English (US)</div>
+      <div class="region-chip">🇬🇧 English (UK)</div>
+      <div class="region-chip">🇦🇺 English (AU)</div>
+      <div class="region-chip">🇨🇦 English (CA)</div>
+      <div class="region-chip">🇮🇳 English (IN)</div>
+      <div class="region-chip">🇨🇳 中文 (简体)</div>
+      <div class="region-chip">🇯🇵 日本語</div>
+      <div class="region-chip">🇩🇪 Deutsch</div>
+      <div class="region-chip">🇫🇷 Français</div>
+      <div class="region-chip">🇧🇷 Português (BR)</div>
+      <div class="region-chip">🇪🇸 Español (ES)</div>
+      <div class="region-chip">🇮🇹 Italiano</div>
+    </div>
+  </section>
+
+  <!-- Open source band -->
+  <div class="oss-band" id="open-source">
+    <h2>Free and open source.</h2>
+    <p>DayDrop is GPL-3.0 licensed. Fork it, improve it, make it yours. Built on the shoulders of the original BingPaper by pengsrc.</p>
+    <a href="https://github.com/yourusername/DayDrop" class="btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+      </svg>
+      Browse the source
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-brand">
+      <div class="footer-name">
+        <svg width="22" height="22" viewBox="0 0 100 100" fill="none">
+          <path d="M50 10 C30 30 17 50 17 66 A33 33 0 0 0 83 66 C83 50 70 30 50 10 Z"
+                stroke="url(#fg)" stroke-width="6" fill="none"/>
+          <line x1="23" y1="70" x2="77" y2="70" stroke="rgba(255,248,238,0.4)" stroke-width="5" stroke-linecap="round"/>
+          <path d="M34 70 A16 16 0 0 1 66 70" stroke="rgba(255,248,238,0.4)" stroke-width="5" stroke-linecap="round" fill="none"/>
+          <defs>
+            <linearGradient id="fg" x1="50" y1="10" x2="50" y2="100" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#FFD84A"/>
+              <stop offset="100%" stop-color="#E8820A"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        DayDrop
+      </div>
+      <p class="footer-tagline">A fresh photo on your Mac desktop, every day.</p>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/yourusername/DayDrop">GitHub</a>
+      <a href="https://github.com/yourusername/DayDrop/releases">Releases</a>
+      <a href="https://github.com/yourusername/DayDrop/issues">Issues</a>
+      <a href="https://github.com/pengsrc/BingPaper">Original project</a>
+    </div>
+    <p class="footer-copy">GPL-3.0 License · Original BingPaper by pengsrc · DayDrop rewrite for Apple Silicon</p>
+  </footer>
+
+</div><!-- .page -->
+
+<script>
+(function(){
+  const s = document.getElementById('stars');
+  const data = [
+    [80,25,2.5,.8,4,.3],[155,48,1.5,.6,5.2,.8],[240,18,2,.75,3.8,1.4],
+    [330,60,1.5,.5,6.1,.2],[420,32,2,.65,4.5,2],[510,50,1.5,.55,5,.6],
+    [600,20,2,.7,3.5,1.8],[650,70,1.5,.5,4.8,.4],[48,90,1,.4,6,2.2],
+    [190,110,1,.45,5.5,1],[560,80,1,.4,4.2,.9],[280,30,1.5,.6,3.2,.5],
+    [450,55,1,.5,5.8,1.6],[580,25,1.5,.65,4.4,2.4],[120,72,1,.38,6.5,.7],
+    [700,40,1.5,.7,3.9,1.2],[760,85,1,.42,5.1,.3],[840,30,2,.68,4.6,1.9],
+    [910,65,1.5,.52,5.7,.1],[970,45,1,.48,6.2,2.8]
+  ];
+  data.forEach(([x,y,r,op,d,delay])=>{
+    const el = document.createElement('span');
+    el.style.cssText = `left:${x/10}%;top:${y/4}%;width:${r*2}px;height:${r*2}px;--lo:${op*.25};--hi:${op};--d:${d}s;--delay:${delay}s`;
+    s.appendChild(el);
+  });
+})();
+</script>
+
+</body>
+</html>

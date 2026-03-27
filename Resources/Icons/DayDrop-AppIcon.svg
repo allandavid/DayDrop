@@ -1,0 +1,42 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#080318"/>
+      <stop offset="45%"  stop-color="#2A0D5C"/>
+      <stop offset="72%"  stop-color="#C04020"/>
+      <stop offset="100%" stop-color="#E88020"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#12096A"/>
+      <stop offset="50%"  stop-color="#7030C0"/>
+      <stop offset="78%"  stop-color="#E06030"/>
+      <stop offset="100%" stop-color="#F0A020"/>
+    </linearGradient>
+    <clipPath id="drop">
+      <path d="M512 115 C330 290 240 490 240 680 A272 272 0 0 0 784 680 C784 490 694 290 512 115 Z"/>
+    </clipPath>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="200" cy="160" r="5"   fill="white" opacity=".80"/>
+  <circle cx="380" cy="110" r="3"   fill="white" opacity=".60"/>
+  <circle cx="650" cy="135" r="4"   fill="white" opacity=".70"/>
+  <circle cx="820" cy="175" r="4"   fill="white" opacity=".72"/>
+  <circle cx="900" cy="100" r="3"   fill="white" opacity=".55"/>
+  <circle cx="150" cy="260" r="3"   fill="white" opacity=".42"/>
+  <circle cx="880" cy="250" r="3"   fill="white" opacity=".48"/>
+  <circle cx="310" cy="200" r="2"   fill="white" opacity=".50"/>
+  <circle cx="720" cy="190" r="2"   fill="white" opacity=".45"/>
+  <g clip-path="url(#drop)">
+    <rect width="1024" height="1024" fill="url(#sky)"/>
+    <rect y="680" width="1024" height="344" fill="#120606"/>
+    <rect y="668" width="1024" height="18" fill="#2A0A06"/>
+    <circle cx="512" cy="680" r="230" fill="#EF9020" opacity=".13"/>
+    <circle cx="512" cy="680" r="168" fill="#F8AE2E" opacity=".20"/>
+    <circle cx="512" cy="680" r="118" fill="#FFD050" opacity=".88"/>
+    <circle cx="512" cy="680" r="94"  fill="#FFE46A"/>
+  </g>
+  <path d="M512 115 C330 290 240 490 240 680 A272 272 0 0 0 784 680 C784 490 694 290 512 115 Z"
+        fill="none" stroke="white" stroke-width="28" opacity=".10"/>
+  <path d="M512 115 C330 290 240 490 240 680 A272 272 0 0 0 784 680 C784 490 694 290 512 115 Z"
+        fill="none" stroke="white" stroke-width="9" opacity=".80"/>
+</svg>
